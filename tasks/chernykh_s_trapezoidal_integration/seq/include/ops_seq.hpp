@@ -25,6 +25,10 @@ explicit ChernykhSTrapezoidalIntegrationSEQ(const InType &in);
   // const IntegrationInType& Input - входные данные 
   // double& total_sum - копилка сумм
 
+  static double CalculatePointAndWeight(const IntegrationInType &input, 
+                                        const std::vector<std::size_t> &counters, 
+                                        std::vector<double> &point);
+
   bool ValidationImpl() override;
   bool PreProcessingImpl() override;
   bool RunImpl() override;
