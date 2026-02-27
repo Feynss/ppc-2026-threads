@@ -1,7 +1,8 @@
 #include <gtest/gtest.h>
 
-#include <algorithm>
+#include <cstddef>
 #include <fstream>
+#include <stdexcept>
 #include <string>
 #include <vector>
 

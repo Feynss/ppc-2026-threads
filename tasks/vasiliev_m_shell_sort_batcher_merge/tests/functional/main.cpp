@@ -3,13 +3,13 @@
 
 #include <algorithm>
 #include <array>
+#include <cctype>
 #include <cstddef>
-#include <cstdint>
-#include <numeric>
+#include <fstream>
+#include <ranges>
 #include <stdexcept>
 #include <string>
 #include <tuple>
-#include <utility>
 #include <vector>
 
 #include "util/include/func_test_util.hpp"
@@ -24,7 +24,7 @@ class VasilievMShellSortBatcherMergeFuncTestsSEQ : public ppc::util::BaseRunFunc
   static std::string PrintTestParam(const TestType &test_param) {
     std::string name = std::to_string(std::get<0>(test_param)) + "_" + std::get<1>(test_param);
     for (char &c : name) {
-      if (!std::isalnum(c)) {
+      if (std::isalnum(static_cast<unsigned char>(c)) == 0) {
         c = '_';
       }
     }
@@ -66,18 +66,14 @@ class VasilievMShellSortBatcherMergeFuncTestsSEQ : public ppc::util::BaseRunFunc
       return false;
     }
 
-    auto it = std::is_sorted_until(output_data.begin(), output_data.end());
+    auto it = std::ranges::is_sorted_until(output_data);
     if (it != output_data.end()) {
       return false;
     }
 
     auto input_sorted = input_data_;
-    std::sort(input_sorted.begin(), input_sorted.end());
-    if (input_sorted != output_data) {
-      return false;
-    }
-
-    return true;
+    std::ranges::sort(input_sorted);
+    return input_sorted == output_data;
   }
 
   InType GetTestInputData() final {
