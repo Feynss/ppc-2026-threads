@@ -27,7 +27,7 @@ class RedkinaAIntegralSimpsonOMP : public BaseTask {
   std::vector<double> b_;
   std::vector<int> n_;
 
-  double result_ = 0.0;
+  double result_{0.0};
 };
 
 }  // namespace redkina_a_integral_simpson_seq

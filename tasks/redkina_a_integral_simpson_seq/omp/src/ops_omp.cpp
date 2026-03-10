@@ -2,13 +2,24 @@
 
 #include <omp.h>
 
+#include <cmath>
 #include <cstddef>
-#include <functional>
 #include <vector>
 
 #include "redkina_a_integral_simpson_seq/common/include/common.hpp"
 
 namespace redkina_a_integral_simpson_seq {
+
+namespace {
+
+inline double GetCoeff(int idx, int n) {
+  if (idx == 0 || idx == n) {
+    return 1.0;
+  }
+  return (idx % 2 == 1) ? 4.0 : 2.0;
+}
+
+}  // namespace
 
 RedkinaAIntegralSimpsonOMP::RedkinaAIntegralSimpsonOMP(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
@@ -19,7 +30,7 @@ bool RedkinaAIntegralSimpsonOMP::ValidationImpl() {
   const auto &in = GetInput();
   size_t dim = in.a.size();
 
-  if (dim == 0 || in.b.size() != dim || in.n.size() != dim) {
+  if (dim == 0 || in.n.size() != dim || in.b.size() != dim) {
     return false;
   }
 
@@ -61,17 +72,20 @@ bool RedkinaAIntegralSimpsonOMP::RunImpl() {
     h_prod *= h[i];
   }
 
-  size_t total_points = 1;
+  long long total_points = 1;
   for (size_t i = 0; i < dim; ++i) {
-    total_points *= static_cast<size_t>(n_[i] + 1);
+    total_points *= (static_cast<long long>(n_[i]) + 1);
   }
 
   double sum = 0.0;
 
-#pragma omp parallel for reduction(+ : sum)
-  for (long long linear = 0; linear < static_cast<long long>(total_points); ++linear) {
+#pragma omp parallel for default(none) reduction(+ : sum) shared(total_points)
+  for (long long linear_idx = 0; linear_idx < total_points; ++linear_idx) {
     std::vector<int> indices(dim);
-    long long tmp = linear;
+    std::vector<double> point(dim);
+
+    long long tmp = linear_idx;
+    double weight_prod = 1.0;
 
     for (int d = static_cast<int>(dim) - 1; d >= 0; --d) {
       int size_d = n_[d] + 1;
@@ -79,29 +93,12 @@ bool RedkinaAIntegralSimpsonOMP::RunImpl() {
       tmp /= size_d;
     }
 
-    std::vector<double> point(dim);
-
-    double w_prod = 1.0;
-
     for (size_t d = 0; d < dim; ++d) {
-      int idx = indices[d];
-
-      point[d] = a_[d] + (static_cast<double>(idx) * h[d]);
-
-      int w = 0;
-
-      if (idx == 0 || idx == n_[d]) {
-        w = 1;
-      } else if (idx % 2 == 1) {
-        w = 4;
-      } else {
-        w = 2;
-      }
-
-      w_prod *= static_cast<double>(w);
+      point[d] = a_[d] + indices[d] * h[d];
+      weight_prod *= GetCoeff(indices[d], n_[d]);
     }
 
-    sum += w_prod * func_(point);
+    sum += weight_prod * func_(point);
   }
 
   double denominator = 1.0;
