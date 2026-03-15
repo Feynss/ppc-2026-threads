@@ -95,7 +95,7 @@ bool SmyshlaevASleCgTaskOMP::RunImpl() {
 
   double rs_old = 0.0;
   int n_iters = static_cast<int>(n);
-#pragma omp parallel for default(none) shared(n_iters, r) schedule(static) reduction(+ : rs_old)
+#pragma omp parallel for default(none) shared(n_iters, r) reduction(+ : rs_old)
   for (int i = 0; i < n_iters; ++i) {
     rs_old += r[i] * r[i];
   }
