@@ -8,13 +8,13 @@
 #include <tuple>
 
 #include "morozova_s_strassen_multiplication/common/include/common.hpp"
+
 #include "morozova_s_strassen_multiplication/omp/include/ops_omp.hpp"
 #include "morozova_s_strassen_multiplication/seq/include/ops_seq.hpp"
 #include "util/include/func_test_util.hpp"
 #include "util/include/util.hpp"
 
 namespace morozova_s_strassen_multiplication {
-
 template <typename TaskType>
 class MorozovaSStrassenMultiplicationFuncTests : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
  public:
@@ -218,11 +218,11 @@ class MorozovaSStrassenMultiplicationFuncTests : public ppc::util::BaseRunFuncTe
 };
 
 namespace {
-
 using MorozovaSStrassenMultiplicationSEQFuncTests =
     MorozovaSStrassenMultiplicationFuncTests<MorozovaSStrassenMultiplicationSEQ>;
 
 TEST_P(MorozovaSStrassenMultiplicationSEQFuncTests, MatrixMultiplication) {
+TEST_P(MorozovaSStrassenMultiplicationFuncTests, MatrixMultiplication) {
   ExecuteTest(GetParam());
 }
 
@@ -233,7 +233,6 @@ const std::array<TestType, 7> kTestParam = {std::make_tuple(1, "2x2"),         s
 
 const auto kTestTasksSEQ = ppc::util::AddFuncTask<MorozovaSStrassenMultiplicationSEQ, InType>(
     kTestParam, PPC_SETTINGS_morozova_s_strassen_multiplication);
-
 const auto kGtestValuesSEQ = ppc::util::ExpandToValues(kTestTasksSEQ);
 const auto kPerfTestNameSEQ =
     MorozovaSStrassenMultiplicationSEQFuncTests::PrintFuncTestName<MorozovaSStrassenMultiplicationSEQFuncTests>;
@@ -257,6 +256,12 @@ const auto kPerfTestNameOMP =
 
 INSTANTIATE_TEST_SUITE_P(StrassenMultiplicationOMPTests, MorozovaSStrassenMultiplicationOMPFuncTests, kGtestValuesOMP,
                          kPerfTestNameOMP);
+const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksSEQ);
+const auto kPerfTestName =
+    MorozovaSStrassenMultiplicationFuncTests::PrintFuncTestName<MorozovaSStrassenMultiplicationFuncTests>;
+
+INSTANTIATE_TEST_SUITE_P(StrassenMultiplicationTests, MorozovaSStrassenMultiplicationFuncTests, kGtestValues,
+                         kPerfTestName);
 
 }  // namespace
 
