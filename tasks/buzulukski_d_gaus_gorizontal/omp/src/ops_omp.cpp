@@ -7,6 +7,7 @@
 #include <cmath>
 #include <cstddef>
 #include <cstdint>
+#include <vector>
 
 #include "buzulukski_d_gaus_gorizontal/common/include/common.hpp"
 
@@ -46,37 +47,48 @@ bool BuzulukskiDGausGorizontalOMP::PreProcessingImpl() {
 }
 
 void BuzulukskiDGausGorizontalOMP::ApplyGaussianToPixel(int py, int px) {
-  const auto u_width = static_cast<std::size_t>(width_);
-  const auto u_height = static_cast<std::size_t>(height_);
-  const auto u_channels = static_cast<std::size_t>(kChannels);
-
-  for (int ch = 0; ch < kChannels; ++ch) {
-    int sum = 0;
-    for (int ky = -1; ky <= 1; ++ky) {
-      for (int kx = -1; kx <= 1; ++kx) {
-        const int ny = std::clamp(py + ky, 0, static_cast<int>(u_height) - 1);
-        const int nx = std::clamp(px + kx, 0, static_cast<int>(u_width) - 1);
-
-        const auto idx = (((static_cast<std::size_t>(ny) * u_width) + static_cast<std::size_t>(nx)) * u_channels) +
-                         static_cast<std::size_t>(ch);
-
-        const auto row_idx = static_cast<std::size_t>(ky) + 1;
-        const auto col_idx = static_cast<std::size_t>(kx) + 1;
-
-        sum += static_cast<int>(input_image_.at(idx)) * kKernel.at(row_idx).at(col_idx);
-      }
-    }
-    const auto out_idx = (((static_cast<std::size_t>(py) * u_width) + static_cast<std::size_t>(px)) * u_channels) +
-                         static_cast<std::size_t>(ch);
-    output_image_.at(out_idx) = static_cast<uint8_t>(sum / kKernelSum);
-  }
+  (void)py;
+  (void)px;
 }
 
 bool BuzulukskiDGausGorizontalOMP::RunImpl() {
-#pragma omp parallel for default(shared)
-  for (int py = 0; py < height_; ++py) {
-    for (int px = 0; px < width_; ++px) {
-      ApplyGaussianToPixel(py, px);
+  const int h = height_;
+  const int w = width_;
+  const uint8_t *in_ptr = input_image_.data();
+  uint8_t *out_ptr = output_image_.data();
+
+#pragma omp parallel for default(none) shared(h, w, in_ptr, out_ptr, kKernel)
+  for (int py = 0; py < h; ++py) {
+    for (int px = 0; px < w; ++px) {
+      for (int ch = 0; ch < 3; ++ch) {
+        int sum = 0;
+        for (int ky = -1; ky <= 1; ++ky) {
+          for (int kx = -1; kx <= 1; ++kx) {
+            int ny = py + ky;
+            int nx = px + kx;
+
+            if (ny < 0) {
+              ny = 0;
+            }
+            if (ny >= h) {
+              ny = h - 1;
+            }
+            if (nx < 0) {
+              nx = 0;
+            }
+            if (nx >= w) {
+              nx = w - 1;
+            }
+
+            const size_t idx = ((static_cast<size_t>(ny) * static_cast<size_t>(w)) + static_cast<size_t>(nx)) * 3 +
+                               static_cast<size_t>(ch);
+            sum += static_cast<int>(in_ptr[idx]) * kKernel[ky + 1][kx + 1];
+          }
+        }
+        const size_t out_idx = ((static_cast<size_t>(py) * static_cast<size_t>(w)) + static_cast<size_t>(px)) * 3 +
+                               static_cast<size_t>(ch);
+        out_ptr[out_idx] = static_cast<uint8_t>(sum / kKernelSum);
+      }
     }
   }
   return true;
