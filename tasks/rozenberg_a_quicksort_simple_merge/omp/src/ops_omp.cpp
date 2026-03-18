@@ -114,8 +114,8 @@ void RozenbergAQuicksortSimpleMergeOMP::Merge(InType &data, int left, int mid, i
     temp[k++] = data[j++];
   }
 
-  for (int i = 0; i < k; ++i) {
-    data[left + i] = temp[i];
+  for (int idx = 0; idx < k; ++idx) {
+    data[left + idx] = temp[idx];
   }
 }
 
