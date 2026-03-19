@@ -96,13 +96,13 @@ class TerekhovDGaussBase : public ppc::util::BaseRunFuncTests<InType, OutType, T
   InType input_data_;
 };
 
-class TerekhovDRunFuncTestsGauss : public TerekhovDGaussBase {};
+class TerekhovDGaussVertRunFuncTests : public TerekhovDGaussBase {};
 
-class TerekhovDRunFuncTestsGaussOMP : public TerekhovDGaussBase {};
+class TerekhovDGaussVertRunFuncTestsOMP : public TerekhovDGaussBase {};
 
 namespace {
 
-TEST_P(TerekhovDRunFuncTestsGauss, GaussFilterSEQ) {
+TEST_P(TerekhovDGaussVertRunFuncTests, GaussFilterSEQ) {
   ExecuteTest(GetParam());
 }
 
@@ -110,14 +110,14 @@ const std::array<TestType, 3> kTestParam = {16, 256, 1024};
 const auto kTestTasksListSEQ =
     ppc::util::AddFuncTask<TerekhovDGaussVertSEQ, InType>(kTestParam, PPC_SETTINGS_terekhov_d_gauss_vert);
 const auto kGtestValuesSEQ = ppc::util::ExpandToValues(kTestTasksListSEQ);
-const auto kTestNameSEQ = TerekhovDRunFuncTestsGauss::PrintFuncTestName<TerekhovDRunFuncTestsGauss>;
-INSTANTIATE_TEST_SUITE_P(GaussFilterTestsSEQ, TerekhovDRunFuncTestsGauss, kGtestValuesSEQ, kTestNameSEQ);
+const auto kTestNameSEQ = TerekhovDGaussVertRunFuncTests::PrintFuncTestName<TerekhovDGaussVertRunFuncTests>;
+INSTANTIATE_TEST_SUITE_P(GaussFilterTestsSEQ, TerekhovDGaussVertRunFuncTests, kGtestValuesSEQ, kTestNameSEQ);
 
 }  // namespace
 
 namespace {
 
-TEST_P(TerekhovDRunFuncTestsGaussOMP, GaussFilterOMP) {
+TEST_P(TerekhovDGaussVertRunFuncTestsOMP, GaussFilterOMP) {
   ExecuteTest(GetParam());
 }
 
@@ -125,8 +125,8 @@ const std::array<TestType, 3> kTestParamOMP = {16, 256, 1024};
 const auto kTestTasksListOMP =
     ppc::util::AddFuncTask<TerekhovDGaussVertOMP, InType>(kTestParamOMP, PPC_SETTINGS_terekhov_d_gauss_vert);
 const auto kGtestValuesOMP = ppc::util::ExpandToValues(kTestTasksListOMP);
-const auto kTestNameOMP = TerekhovDRunFuncTestsGaussOMP::PrintFuncTestName<TerekhovDRunFuncTestsGaussOMP>;
-INSTANTIATE_TEST_SUITE_P(GaussFilterTestsOMP, TerekhovDRunFuncTestsGaussOMP, kGtestValuesOMP, kTestNameOMP);
+const auto kTestNameOMP = TerekhovDGaussVertRunFuncTestsOMP::PrintFuncTestName<TerekhovDGaussVertRunFuncTestsOMP>;
+INSTANTIATE_TEST_SUITE_P(GaussFilterTestsOMP, TerekhovDGaussVertRunFuncTestsOMP, kGtestValuesOMP, kTestNameOMP);
 
 }  // namespace
 

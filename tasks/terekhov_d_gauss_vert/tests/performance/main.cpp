@@ -13,7 +13,7 @@
 
 namespace terekhov_d_gauss_vert {
 
-class TerekhovDGaussVertPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
+class TerekhovDiGaussVertPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
  public:
   void SetUp() override {
     const size_t total_pixels = 10000000;
@@ -42,7 +42,7 @@ class TerekhovDGaussVertPerfTests : public ppc::util::BaseRunPerfTests<InType, O
   InType input_data_;
 };
 
-TEST_P(TerekhovDGaussVertPerfTests, RunPerfModes) {
+TEST_P(TerekhovDiGaussVertPerfTests, RunPerfModes) {
   ExecuteTest(GetParam());
 }
 
@@ -53,9 +53,9 @@ const auto kAllPerfTasks =
                    ppc::util::MakeAllPerfTasks<InType, TerekhovDGaussVertOMP>(PPC_SETTINGS_terekhov_d_gauss_vert));
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
-const auto kPerfTestName = TerekhovDGaussVertPerfTests::CustomPerfTestName;
+const auto kPerfTestName = TerekhovDiGaussVertPerfTests::CustomPerfTestName;
 
-INSTANTIATE_TEST_SUITE_P(PerfTests, TerekhovDGaussVertPerfTests, kGtestValues, kPerfTestName);
+INSTANTIATE_TEST_SUITE_P(PerfTests, TerekhovDiGaussVertPerfTests, kGtestValues, kPerfTestName);
 
 }  // namespace
 
