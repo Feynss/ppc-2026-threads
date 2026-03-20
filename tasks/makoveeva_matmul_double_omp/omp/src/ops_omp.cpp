@@ -10,7 +10,8 @@
 
 namespace makoveeva_matmul_double_omp {
 
-MatmulDoubleOMPTask::MatmulDoubleOMPTask(const InType &in) : n_(0) {
+// Убираем : n_(0) - инициализация будет в классе
+MatmulDoubleOMPTask::MatmulDoubleOMPTask(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = in;
   GetOutput() = std::vector<double>();
