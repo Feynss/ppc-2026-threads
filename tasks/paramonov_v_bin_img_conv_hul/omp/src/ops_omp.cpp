@@ -84,7 +84,9 @@ void ConvexHullOMP::FloodFill(int start_row, int start_col, std::vector<bool> &v
 
     component.push_back(current);
 
-    for (const auto &[dr, dc] : kNeighbors) {
+    for (const auto &neighbor : kNeighbors) {
+      int dr = neighbor.first;
+      int dc = neighbor.second;
       int next_row = current.row + dr;
       int next_col = current.col + dc;
 
@@ -127,9 +129,9 @@ void ConvexHullOMP::ExtractConnectedComponents() {
   }
 
 #pragma omp parallel for default(none) shared(start_points, total_pixels, rows, cols, pixels, components, kNeighbors)
-  for (const auto &start_point : start_points) {
-    int start_row = start_point.first;
-    int start_col = start_point.second;
+  for (int64_t i = 0; i < static_cast<int64_t>(start_points.size()); ++i) {
+    int start_row = start_points[static_cast<size_t>(i)].first;
+    int start_col = start_points[static_cast<size_t>(i)].second;
 
     std::vector<bool> local_visited(total_pixels, false);
     std::vector<PixelPoint> component;
@@ -143,7 +145,9 @@ void ConvexHullOMP::ExtractConnectedComponents() {
       pixel_stack.pop();
       component.push_back(current);
 
-      for (const auto &[dr, dc] : kNeighbors) {
+      for (const auto &neighbor : kNeighbors) {
+        int dr = neighbor.first;
+        int dc = neighbor.second;
         int next_row = current.row + dr;
         int next_col = current.col + dc;
 
