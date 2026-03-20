@@ -4,7 +4,7 @@
 
 #include <algorithm>
 #include <cstddef>
-#include <ranges>
+#include <iterator>
 #include <utility>
 #include <vector>
 
