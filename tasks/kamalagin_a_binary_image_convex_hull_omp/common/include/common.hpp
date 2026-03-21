@@ -3,7 +3,6 @@
 #include <cstddef>
 #include <cstdint>
 #include <string>
-#include <tuple>
 #include <vector>
 
 #include "task/include/task.hpp"
@@ -25,7 +24,7 @@ using HullList = std::vector<Hull>;
 struct BinaryImage {
   int rows{};
   int cols{};
-  std::vector<uint8_t> data{};
+  std::vector<uint8_t> data;
 
   [[nodiscard]] size_t Index(int r, int c) const {
     return (static_cast<size_t>(r) * static_cast<size_t>(cols)) + static_cast<size_t>(c);

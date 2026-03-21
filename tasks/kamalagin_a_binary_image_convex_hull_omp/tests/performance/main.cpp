@@ -1,11 +1,12 @@
 #include <gtest/gtest.h>
 
 #include <cstddef>
+#include <cstdint>
+#include <utility>
 #include <vector>
 
 #include "kamalagin_a_binary_image_convex_hull_omp/common/include/common.hpp"
 #include "kamalagin_a_binary_image_convex_hull_omp/omp/include/ops_omp.hpp"
-#include "performance/include/performance.hpp"
 #include "util/include/perf_test_util.hpp"
 
 namespace kamalagin_a_binary_image_convex_hull_omp {
@@ -15,14 +16,14 @@ namespace {
 BinaryImage MakePerfImage() {
   constexpr int kSize = 100;
   std::vector<uint8_t> data(static_cast<size_t>(kSize) * static_cast<size_t>(kSize), 0);
-  for (int r = 10; r < 40; ++r) {
-    for (int c = 10; c < 40; ++c) {
-      data[(static_cast<size_t>(r) * static_cast<size_t>(kSize)) + static_cast<size_t>(c)] = 1;
+  for (int row = 10; row < 40; ++row) {
+    for (int col = 10; col < 40; ++col) {
+      data[(static_cast<size_t>(row) * static_cast<size_t>(kSize)) + static_cast<size_t>(col)] = 1;
     }
   }
-  for (int r = 50; r < 90; ++r) {
-    for (int c = 50; c < 90; ++c) {
-      data[(static_cast<size_t>(r) * static_cast<size_t>(kSize)) + static_cast<size_t>(c)] = 1;
+  for (int row = 50; row < 90; ++row) {
+    for (int col = 50; col < 90; ++col) {
+      data[(static_cast<size_t>(row) * static_cast<size_t>(kSize)) + static_cast<size_t>(col)] = 1;
     }
   }
   for (int i = 0; i < kSize; ++i) {

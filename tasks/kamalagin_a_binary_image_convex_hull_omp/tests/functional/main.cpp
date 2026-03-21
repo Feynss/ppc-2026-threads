@@ -4,9 +4,6 @@
 #include <array>
 #include <cstddef>
 #include <string>
-#include <tuple>
-#include <utility>
-#include <vector>
 
 #include "kamalagin_a_binary_image_convex_hull_omp/common/include/common.hpp"
 #include "kamalagin_a_binary_image_convex_hull_omp/omp/include/ops_omp.hpp"
@@ -138,7 +135,7 @@ class KamalaginABinaryImageConvexHullFuncTests : public ppc::util::BaseRunFuncTe
 
  private:
   InType input_data_{};
-  HullList expected_{};
+  HullList expected_;
 };
 
 namespace {
