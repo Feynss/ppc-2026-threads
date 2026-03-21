@@ -10,7 +10,6 @@
 #include <vector>
 
 #include "krasnopevtseva_v_hoare_batcher_sort/common/include/common.hpp"
-
 namespace krasnopevtseva_v_hoare_batcher_sort {
 
 KrasnopevtsevaVHoareBatcherSortOMP::KrasnopevtsevaVHoareBatcherSortOMP(const InType &in) {
@@ -141,16 +140,20 @@ void KrasnopevtsevaVHoareBatcherSortOMP::BatcherMerge(int thread_input_size, std
 #pragma omp parallel for default(none) shared(pointers, sizes, pack, step, thread_input_size, \
                                                   par_if_greater) if ((thread_input_size / step) > par_if_greater)
     for (int off = 0; off < pack / 2; ++off) {
-      std::size_t idx1 = static_cast<std::size_t>(2 * step * off);
-      std::size_t idx2 = static_cast<std::size_t>((2 * step * off) + step);
+      long long idx1_val = static_cast<long long>(2) * step * off;
+      long long idx2_val = static_cast<long long>(2) * step * off + step;
+      auto idx1 = static_cast<std::size_t>(idx1_val);
+      auto idx2 = static_cast<std::size_t>(idx2_val);
       BatcherMergeBlocksStep(pointers[idx1], sizes[idx1], pointers[idx2], sizes[idx2]);
     }
     if ((pack / 2) - 1 == 0) {
       BatcherMergeBlocksStep(pointers[0], sizes[sizes.size() - 1], pointers[pointers.size() - 1],
                              sizes[sizes.size() - 1]);
     } else if ((pack / 2) % 2 != 0) {
-      std::size_t idx1 = static_cast<std::size_t>(2 * step * ((pack / 2) - 2));
-      std::size_t idx2 = static_cast<std::size_t>(2 * step * ((pack / 2) - 1));
+      long long idx1_val = static_cast<long long>(2) * step * ((pack / 2) - 2);
+      long long idx2_val = static_cast<long long>(2) * step * ((pack / 2) - 1);
+      auto idx1 = static_cast<std::size_t>(idx1_val);
+      auto idx2 = static_cast<std::size_t>(idx2_val);
       BatcherMergeBlocksStep(pointers[idx1], sizes[idx1], pointers[idx2], sizes[idx2]);
     }
   }
