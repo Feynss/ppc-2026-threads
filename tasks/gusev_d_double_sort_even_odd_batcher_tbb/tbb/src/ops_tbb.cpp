@@ -1,5 +1,9 @@
 #include "gusev_d_double_sort_even_odd_batcher_tbb/tbb/include/ops_tbb.hpp"
 
+#include <tbb/tbb.h>
+
+#include <algorithm>
+
 #include "gusev_d_double_sort_even_odd_batcher_tbb/common/include/common.hpp"
 
 namespace gusev_d_double_sort_even_odd_batcher_tbb_task_threads {
@@ -22,6 +26,11 @@ bool DoubleSortEvenOddBatcherTBB::PreProcessingImpl() {
 
 bool DoubleSortEvenOddBatcherTBB::RunImpl() {
   result_data_ = input_data_;
+  if (result_data_.size() < 2) {
+    return true;
+  }
+
+  tbb::parallel_sort(result_data_.begin(), result_data_.end(), std::less<ValueType>());
   return true;
 }
 
