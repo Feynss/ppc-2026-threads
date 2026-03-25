@@ -1,56 +1,107 @@
-#include "example_threads/tbb/include/ops_tbb.hpp"
-
+#include "timur_a_cannon/tbb/include/ops_tbb.hpp"
 #include <tbb/tbb.h>
-
-#include <atomic>
-#include <numeric>
-#include <util/include/util.hpp>
+#include <utility>
 #include <vector>
 
-#include "example_threads/common/include/common.hpp"
-#include "oneapi/tbb/parallel_for.h"
+namespace timur_a_cannon {
 
-namespace nesterov_a_test_task_threads {
-
-NesterovATestTaskTBB::NesterovATestTaskTBB(const InType &in) {
+TimurACannonMatrixMultiplicationTBB::TimurACannonMatrixMultiplicationTBB(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = in;
-  GetOutput() = 0;
 }
 
-bool NesterovATestTaskTBB::ValidationImpl() {
-  return (GetInput() > 0) && (GetOutput() == 0);
+bool TimurACannonMatrixMultiplicationTBB::ValidationImpl() {
+  const auto &input = GetInput();
+  int b_size = std::get<0>(input);
+  const auto &mat_a = std::get<1>(input);
+  const auto &mat_b = std::get<2>(input);
+
+  if (b_size <= 0 || mat_a.empty() || mat_b.empty()) return false;
+  size_t n = mat_a.size();
+  return mat_a[0].size() == n && mat_b.size() == n && (n % static_cast<size_t>(b_size) == 0);
 }
 
-bool NesterovATestTaskTBB::PreProcessingImpl() {
-  GetOutput() = 2 * GetInput();
-  return GetOutput() > 0;
+bool TimurACannonMatrixMultiplicationTBB::PreProcessingImpl() {
+  return true;
 }
 
-bool NesterovATestTaskTBB::RunImpl() {
-  for (InType i = 0; i < GetInput(); i++) {
-    for (InType j = 0; j < GetInput(); j++) {
-      for (InType k = 0; k < GetInput(); k++) {
-        std::vector<InType> tmp(i + j + k, 1);
-        GetOutput() += std::accumulate(tmp.begin(), tmp.end(), 0);
-        GetOutput() -= i + j + k;
+bool TimurACannonMatrixMultiplicationTBB::RunImpl() {
+  const auto &input = GetInput();
+  int b_size = std::get<0>(input);
+  const auto &matrix_a = std::get<1>(input);
+  const auto &matrix_b = std::get<2>(input);
+  int n = static_cast<int>(matrix_a.size());
+  int grid_sz = n / b_size;
+
+  using Matrix = std::vector<std::vector<double>>;
+  using BlockGrid = std::vector<std::vector<Matrix>>;
+
+  BlockGrid bl_a(grid_sz, std::vector<Matrix>(grid_sz, Matrix(b_size, std::vector<double>(b_size))));
+  BlockGrid bl_b(grid_sz, std::vector<Matrix>(grid_sz, Matrix(b_size, std::vector<double>(b_size))));
+  BlockGrid bl_c(grid_sz, std::vector<Matrix>(grid_sz, Matrix(b_size, std::vector<double>(b_size, 0.0))));
+
+  tbb::parallel_for(tbb::blocked_range2d<int>(0, grid_sz, 0, grid_sz), [&](const tbb::blocked_range2d<int> &r) {
+    for (int i = r.rows().begin(); i != r.rows().end(); ++i) {
+      for (int j = r.cols().begin(); j != r.cols().end(); ++j) {
+        int s = (i + j) % grid_sz;
+        for (int row = 0; row < b_size; ++row) {
+          for (int col = 0; col < b_size; ++col) {
+            bl_a[i][j][row][col] = matrix_a[i * b_size + row][s * b_size + col];
+            bl_b[i][j][row][col] = matrix_b[s * b_size + row][j * b_size + col];
+          }
+        }
       }
     }
+  });
+
+  for (int step = 0; step < grid_sz; ++step) {
+    tbb::parallel_for(tbb::blocked_range2d<int>(0, grid_sz, 0, grid_sz), [&](const tbb::blocked_range2d<int> &r) {
+      for (int i = r.rows().begin(); i != r.rows().end(); ++i) {
+        for (int j = r.cols().begin(); j != r.cols().end(); ++j) {
+          for (int row = 0; row < b_size; ++row) {
+            for (int k = 0; k < b_size; ++k) {
+              double temp = bl_a[i][j][row][k];
+              for (int col = 0; col < b_size; ++col) {
+                bl_c[i][j][row][col] += temp * bl_b[i][j][k][col];
+              }
+            }
+          }
+        }
+      }
+    });
+
+    if (grid_sz > 1 && step < grid_sz - 1) {
+      tbb::parallel_for(0, grid_sz, [&](int i) {
+        Matrix first = std::move(bl_a[i][0]);
+        for (int j = 0; j < grid_sz - 1; ++j) bl_a[i][j] = std::move(bl_a[i][j + 1]);
+        bl_a[i][grid_sz - 1] = std::move(first);
+      });
+      tbb::parallel_for(0, grid_sz, [&](int j) {
+        Matrix first = std::move(bl_b[0][j]);
+        for (int i = 0; i < grid_sz - 1; ++i) bl_b[i][j] = std::move(bl_b[i + 1][j]);
+        bl_b[grid_sz - 1][j] = std::move(first);
+      });
+    }
   }
+  Matrix result(n, std::vector<double>(n));
+  tbb::parallel_for(tbb::blocked_range2d<int>(0, grid_sz, 0, grid_sz), [&](const tbb::blocked_range2d<int> &r) {
+    for (int i = r.rows().begin(); i != r.rows().end(); ++i) {
+      for (int j = r.cols().begin(); j != r.cols().end(); ++j) {
+        for (int row = 0; row < b_size; ++row) {
+          for (int col = 0; col < b_size; ++col) {
+            result[i * b_size + row][j * b_size + col] = bl_c[i][j][row][col];
+          }
+        }
+      }
+    }
+  });
 
-  const int num_threads = ppc::util::GetNumThreads();
-  GetOutput() *= num_threads;
-
-  std::atomic<int> counter(0);
-  tbb::parallel_for(0, ppc::util::GetNumThreads(), [&](int /*i*/) { counter++; });
-
-  GetOutput() /= counter;
-  return GetOutput() > 0;
+  GetOutput() = std::move(result);
+  return true;
 }
 
-bool NesterovATestTaskTBB::PostProcessingImpl() {
-  GetOutput() -= GetInput();
-  return GetOutput() > 0;
+bool TimurACannonMatrixMultiplicationTBB::PostProcessingImpl() {
+  return true;
 }
 
-}  // namespace nesterov_a_test_task_threads
+}  // namespace timur_a_cannon

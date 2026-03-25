@@ -26,15 +26,6 @@ class TimurACannonMatrixMultiplicationTBB : public BaseTask {
   bool PreProcessingImpl() override;
   bool RunImpl() override;
   bool PostProcessingImpl() override;
-
-  static void RotateBlocksA(std::vector<std::vector<Matrix>> &blocks, int grid_sz);
-  static void RotateBlocksB(std::vector<std::vector<Matrix>> &blocks, int grid_sz);
-  static void BlockMultiplyAccumulate(const Matrix &a, const Matrix &b, Matrix &c, int b_size);
-
-  static void DistributeData(const Matrix &src_a, const Matrix &src_b, std::vector<std::vector<Matrix>> &bl_a,
-                             std::vector<std::vector<Matrix>> &bl_b, int b_size, int grid_sz);
-
-  static void CollectResult(const std::vector<std::vector<Matrix>> &bl_c, Matrix &res, int b_size, int grid_sz);
 };
 
 }  // namespace timur_a_cannon
