@@ -12,7 +12,7 @@
 namespace sosnina_a_radix_simple_merge {
 
 class SosninaARunPerfTestRadixSort : public ppc::util::BaseRunPerfTests<InType, OutType> {
-  static constexpr size_t kCount = 100000;
+  static constexpr size_t kCount = 20000000;
   InType input_data_;
 
   void SetUp() override {
