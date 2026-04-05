@@ -14,17 +14,19 @@ class MatmulDoubleTBBTask : public BaseTask {
     return ppc::task::TypeOfTask::kTBB;
   }
 
-  explicit MatmulDoubleTBBTask(const InType& in);
+  explicit MatmulDoubleTBBTask(const InType &in);
 
   bool ValidationImpl() override;
   bool PreProcessingImpl() override;
   bool RunImpl() override;
   bool PostProcessingImpl() override;
 
-  [[nodiscard]] const std::vector<double>& GetResult() const { return C_; }
+  [[nodiscard]] const std::vector<double> &GetResult() const {
+    return C_;
+  }
 
-  using BaseTask::GetOutput;
   using BaseTask::GetInput;
+  using BaseTask::GetOutput;
 
  private:
   size_t n_ = 0;
