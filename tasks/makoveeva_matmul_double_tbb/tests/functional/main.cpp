@@ -14,7 +14,8 @@
 
 namespace makoveeva_matmul_double_tbb {
 
-class MakoveevaRunFuncTestsThreads : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
+// Уникальное имя класса - добавляем TBB в конец
+class MakoveevaTBBRunFuncTests : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
  public:
   static std::string PrintTestParam(const TestType &test_param) {
     size_t n = std::get<0>(test_param);
@@ -88,7 +89,7 @@ class MakoveevaRunFuncTestsThreads : public ppc::util::BaseRunFuncTests<InType, 
 
 namespace {
 
-TEST_P(MakoveevaRunFuncTestsThreads, MatMulFoxAlg) {
+TEST_P(MakoveevaTBBRunFuncTests, MatMulFoxAlg) {
   ExecuteTest(GetParam());
 }
 
@@ -103,9 +104,10 @@ const auto kTestTasksList =
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 
-const auto kPerfTestName = MakoveevaRunFuncTestsThreads::PrintFuncTestName<MakoveevaRunFuncTestsThreads>;
+const auto kTestName = MakoveevaTBBRunFuncTests::PrintFuncTestName<MakoveevaTBBRunFuncTests>;
 
-INSTANTIATE_TEST_SUITE_P(MatMulFoxAlg_ArithmeticProgression, MakoveevaRunFuncTestsThreads, kGtestValues, kPerfTestName);
+// Уникальное имя test suite
+INSTANTIATE_TEST_SUITE_P(TBBMatMulFoxAlgTests, MakoveevaTBBRunFuncTests, kGtestValues, kTestName);
 
 }  // namespace
 
