@@ -26,45 +26,48 @@ void MultiplyBlock(const std::vector<double> &matrix_a, const std::vector<double
   }
 }
 
+void MultiplyRowRange(const std::vector<double> &matrix_a, const std::vector<double> &matrix_b,
+                      std::vector<double> &output, size_t n, size_t start_i, size_t end_i) {
+  for (size_t i = start_i; i < end_i; ++i) {
+    for (size_t j = 0; j < n; ++j) {
+      double sum = 0.0;
+      for (size_t k = 0; k < n; ++k) {
+        sum += matrix_a[(i * n) + k] * matrix_b[(k * n) + j];
+      }
+      output[(i * n) + j] = sum;
+    }
+  }
+}
+
 void ParallelRowMultiplication(const std::vector<double> &matrix_a, const std::vector<double> &matrix_b,
                                std::vector<double> &output, size_t n, size_t start_i, size_t end_i) {
-  std::vector<std::thread> threads;
   unsigned int num_threads = std::thread::hardware_concurrency();
   if (num_threads == 0) {
     num_threads = 4;
   }
 
+  std::vector<std::thread> threads;
   size_t chunk_size = (end_i - start_i + num_threads - 1) / num_threads;
 
   for (unsigned int tid = 0; tid < num_threads; ++tid) {
-    size_t i_start = start_i + tid * chunk_size;
+    size_t i_start = start_i + (tid * chunk_size);
     size_t i_end_local = std::min(i_start + chunk_size, end_i);
     if (i_start >= end_i) {
       break;
     }
 
-    threads.emplace_back([&, i_start, i_end_local]() {
-      for (size_t i = i_start; i < i_end_local; ++i) {
-        for (size_t j = 0; j < n; ++j) {
-          double sum = 0.0;
-          for (size_t k = 0; k < n; ++k) {
-            sum += matrix_a[(i * n) + k] * matrix_b[(k * n) + j];
-          }
-          output[(i * n) + j] = sum;
-        }
-      }
-    });
+    threads.emplace_back(
+        [&, i_start, i_end_local]() { MultiplyRowRange(matrix_a, matrix_b, output, n, i_start, i_end_local); });
   }
 
-  for (auto &t : threads) {
-    t.join();
+  for (auto &thread : threads) {
+    thread.join();
   }
 }
 
-void ParallelBlockProcessing(const std::vector<double> &matrix_a, const std::vector<double> &matrix_b,
-                             std::vector<double> &output, size_t n, size_t block_k, size_t num_blocks,
-                             size_t block_size, const std::vector<size_t> &block_indices, size_t start_idx,
-                             size_t end_idx) {
+void ProcessBlockRange(const std::vector<double> &matrix_a, const std::vector<double> &matrix_b,
+                       std::vector<double> &output, size_t n, size_t block_k, size_t num_blocks, size_t block_size,
+                       const std::vector<size_t> &block_indices, size_t start_idx, size_t end_idx) {
   for (size_t idx = start_idx; idx < end_idx; ++idx) {
     size_t linear_idx = block_indices[idx];
     size_t block_i = linear_idx / num_blocks;
@@ -80,6 +83,35 @@ void ParallelBlockProcessing(const std::vector<double> &matrix_a, const std::vec
     size_t k_end = std::min(k_start + block_size, n);
 
     MultiplyBlock(matrix_a, matrix_b, output, n, i_start, i_end, j_start, j_end, k_start, k_end);
+  }
+}
+
+void ParallelBlockProcessing(const std::vector<double> &matrix_a, const std::vector<double> &matrix_b,
+                             std::vector<double> &output, size_t n, size_t block_k, size_t num_blocks,
+                             size_t block_size, const std::vector<size_t> &block_indices) {
+  unsigned int num_threads = std::thread::hardware_concurrency();
+  if (num_threads == 0) {
+    num_threads = 4;
+  }
+
+  std::vector<std::thread> threads;
+  size_t chunk_size = (block_indices.size() + num_threads - 1) / num_threads;
+
+  for (unsigned int thread_id = 0; thread_id < num_threads; ++thread_id) {
+    size_t start_idx = thread_id * chunk_size;
+    size_t end_idx = std::min(start_idx + chunk_size, block_indices.size());
+    if (start_idx >= block_indices.size()) {
+      break;
+    }
+
+    threads.emplace_back([&, start_idx, end_idx]() {
+      ProcessBlockRange(matrix_a, matrix_b, output, n, block_k, num_blocks, block_size, block_indices, start_idx,
+                        end_idx);
+    });
+  }
+
+  for (auto &thread : threads) {
+    thread.join();
   }
 }
 
@@ -116,12 +148,7 @@ void BaranovAMultMatrixFoxAlgorithmSTL::FoxBlockMultiplication(size_t n, size_t 
 
   size_t num_blocks = (n + block_size - 1) / block_size;
 
-  std::fill(output.begin(), output.end(), 0.0);
-
-  unsigned int num_threads = std::thread::hardware_concurrency();
-  if (num_threads == 0) {
-    num_threads = 4;
-  }
+  std::ranges::fill(output, 0.0);
 
   std::vector<size_t> block_indices(num_blocks * num_blocks);
   for (size_t idx = 0; idx < num_blocks * num_blocks; ++idx) {
@@ -129,25 +156,7 @@ void BaranovAMultMatrixFoxAlgorithmSTL::FoxBlockMultiplication(size_t n, size_t 
   }
 
   for (size_t block_k = 0; block_k < num_blocks; ++block_k) {
-    std::vector<std::thread> threads;
-    size_t chunk_size = (block_indices.size() + num_threads - 1) / num_threads;
-
-    for (unsigned int thread_id = 0; thread_id < num_threads; ++thread_id) {
-      size_t start_idx = thread_id * chunk_size;
-      size_t end_idx = std::min(start_idx + chunk_size, block_indices.size());
-      if (start_idx >= block_indices.size()) {
-        break;
-      }
-
-      threads.emplace_back([&, start_idx, end_idx, block_k]() {
-        ParallelBlockProcessing(matrix_a, matrix_b, output, n, block_k, num_blocks, block_size, block_indices,
-                                start_idx, end_idx);
-      });
-    }
-
-    for (auto &thread : threads) {
-      thread.join();
-    }
+    ParallelBlockProcessing(matrix_a, matrix_b, output, n, block_k, num_blocks, block_size, block_indices);
   }
 }
 
