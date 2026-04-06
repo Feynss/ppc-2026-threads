@@ -26,17 +26,6 @@ void MultiplyBlock(const std::vector<double> &matrix_a, const std::vector<double
   }
 }
 
-void MultiplyRow(const std::vector<double> &matrix_a, const std::vector<double> &matrix_b, std::vector<double> &output,
-                 size_t n, size_t i, size_t j_start, size_t j_end, size_t k_start, size_t k_end) {
-  for (size_t j = j_start; j < j_end; ++j) {
-    double sum = 0.0;
-    for (size_t k = k_start; k < k_end; ++k) {
-      sum += matrix_a[(i * n) + k] * matrix_b[(k * n) + j];
-    }
-    output[(i * n) + j] = sum;
-  }
-}
-
 void ParallelRowMultiplication(const std::vector<double> &matrix_a, const std::vector<double> &matrix_b,
                                std::vector<double> &output, size_t n, size_t start_i, size_t end_i) {
   std::vector<std::thread> threads;
@@ -126,7 +115,8 @@ void BaranovAMultMatrixFoxAlgorithmSTL::FoxBlockMultiplication(size_t n, size_t 
   auto &output = GetOutput();
 
   size_t num_blocks = (n + block_size - 1) / block_size;
-  std::ranges::fill(output, 0.0);
+
+  std::fill(output.begin(), output.end(), 0.0);
 
   unsigned int num_threads = std::thread::hardware_concurrency();
   if (num_threads == 0) {
@@ -164,6 +154,7 @@ void BaranovAMultMatrixFoxAlgorithmSTL::FoxBlockMultiplication(size_t n, size_t 
 bool BaranovAMultMatrixFoxAlgorithmSTL::RunImpl() {
   const auto &[matrix_size, matrix_a, matrix_b] = GetInput();
   size_t n = matrix_size;
+
   size_t block_size = 64;
   if (n < block_size) {
     StandardMultiplication(n);
