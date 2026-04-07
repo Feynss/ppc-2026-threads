@@ -6,7 +6,6 @@
 #include <tuple>
 
 #include "ovchinnikov_m_shell_sort_batcher_merge/common/include/common.hpp"
-#include "ovchinnikov_m_shell_sort_batcher_merge/omp/include/ops_omp.hpp"
 #include "ovchinnikov_m_shell_sort_batcher_merge/seq/include/ops_seq.hpp"
 #include "util/include/func_test_util.hpp"
 #include "util/include/util.hpp"
