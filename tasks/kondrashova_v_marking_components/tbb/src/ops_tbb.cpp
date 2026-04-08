@@ -6,6 +6,7 @@
 
 #include <algorithm>
 #include <cstddef>
+#include <cstdint>
 #include <vector>
 
 #include "kondrashova_v_marking_components/common/include/common.hpp"
