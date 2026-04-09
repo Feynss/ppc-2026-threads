@@ -88,32 +88,33 @@ double ShkrebkoMCalcOfIntegralRectTBB::ComputeBlockSum(std::size_t start_idx, st
 
   std::vector<int> indices(dim);
   std::size_t temp = start_idx;
-  for (int idx = static_cast<int>(dim) - 1; idx >= 0; --idx) { {
-    indices[idx] = static_cast<int>(temp % static_cast<std::size_t>(n_steps[idx]));
-    temp /= static_cast<std::size_t>(n_steps[idx]);
-  }
-
-  double block_sum = 0.0;
-  std::vector<double> point(dim);
-
-  for (std::size_t iter = 0; iter < (end_idx - start_idx); ++iter) {
-    for (std::size_t dim_idx = 0; dim_idx < dim; ++dim_idx) {
-      point[dim_idx] = limits[dim_idx].first + ((static_cast<double>(indices[dim_idx]) + 0.5) * h[dim_idx]);
+  for (int idx = static_cast<int>(dim) - 1; idx >= 0; --idx) {
+    {
+      indices[idx] = static_cast<int>(temp % static_cast<std::size_t>(n_steps[idx]));
+      temp /= static_cast<std::size_t>(n_steps[idx]);
     }
-    block_sum += local_input_.func(point);
 
-    int level = static_cast<int>(dim) - 1;
-    while (level >= 0) {
-      indices[level]++;
-      if (indices[level] < n_steps[level]) {
-        break;
+    double block_sum = 0.0;
+    std::vector<double> point(dim);
+
+    for (std::size_t iter = 0; iter < (end_idx - start_idx); ++iter) {
+      for (std::size_t dim_idx = 0; dim_idx < dim; ++dim_idx) {
+        point[dim_idx] = limits[dim_idx].first + ((static_cast<double>(indices[dim_idx]) + 0.5) * h[dim_idx]);
       }
-      indices[level] = 0;
-      level--;
-    }
-  }
+      block_sum += local_input_.func(point);
 
-  return block_sum;
-}
+      int level = static_cast<int>(dim) - 1;
+      while (level >= 0) {
+        indices[level]++;
+        if (indices[level] < n_steps[level]) {
+          break;
+        }
+        indices[level] = 0;
+        level--;
+      }
+    }
+
+    return block_sum;
+  }
 
 }  // namespace shkrebko_m_calc_of_integral_rect
