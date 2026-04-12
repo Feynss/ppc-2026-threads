@@ -1,5 +1,7 @@
 #pragma once
 
+#include <cstdint>
+
 #include "otcheskov_s_contrast_lin_stretch/common/include/common.hpp"
 #include "task/include/task.hpp"
 

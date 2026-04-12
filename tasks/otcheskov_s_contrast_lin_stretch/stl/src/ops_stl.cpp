@@ -7,6 +7,7 @@
 #include <vector>
 
 #include "otcheskov_s_contrast_lin_stretch/common/include/common.hpp"
+#include "util/include/util.hpp"
 
 namespace otcheskov_s_contrast_lin_stretch {
 
@@ -66,21 +67,22 @@ OtcheskovSContrastLinStretchSTL::MinMax OtcheskovSContrastLinStretchSTL::Compute
   {
     std::vector<std::jthread> threads;
     threads.reserve(num_threads);
-    for (size_t t = 0; t < num_threads; ++t) {
-      size_t begin = t * block;
-      size_t end = (t == num_threads - 1) ? size : begin + block;
+    for (size_t tid = 0; tid < num_threads; ++tid) {
+      size_t begin = tid * block;
+      size_t end = (tid == num_threads - 1) ? size : begin + block;
 
-      threads.emplace_back([&, t, begin, end]() {
-        auto [min, max] = std::ranges::minmax_element(input.begin() + begin, input.begin() + end);
-        local[t] = {*min, *max};
+      threads.emplace_back([&, tid, begin, end]() {
+        auto [min, max] = std::ranges::minmax_element(input.begin() + static_cast<std::ptrdiff_t>(begin),
+                                                      input.begin() + static_cast<std::ptrdiff_t>(end));
+        local[tid] = {.min = *min, .max = *max};
       });
     }
   }
 
-  MinMax result{255, 0};
-  for (size_t t = 0; t < num_threads; ++t) {
-    result.min = std::min(result.min, local[t].min);
-    result.max = std::max(result.max, local[t].max);
+  MinMax result{.min = 255, .max = 0};
+  for (size_t tid = 0; tid < num_threads; ++tid) {
+    result.min = std::min(result.min, local[tid].min);
+    result.max = std::max(result.max, local[tid].max);
   }
   return result;
 }
@@ -92,9 +94,9 @@ void OtcheskovSContrastLinStretchSTL::CopyInput(const InType &input, OutType &ou
 
   std::vector<std::jthread> threads;
   threads.reserve(num_threads);
-  for (size_t t = 0; t < num_threads; ++t) {
-    size_t begin = t * block;
-    size_t end = (t == num_threads - 1) ? size : begin + block;
+  for (size_t tid = 0; tid < num_threads; ++tid) {
+    size_t begin = tid * block;
+    size_t end = (tid == num_threads - 1) ? size : begin + block;
 
     threads.emplace_back([&, begin, end]() {
       for (size_t i = begin; i < end; ++i) {
@@ -111,9 +113,9 @@ void OtcheskovSContrastLinStretchSTL::LinearStretch(const InType &input, OutType
 
   std::vector<std::jthread> threads;
   threads.reserve(num_threads);
-  for (size_t t = 0; t < num_threads; ++t) {
-    size_t begin = t * block;
-    size_t end = (t == num_threads - 1) ? size : begin + block;
+  for (size_t tid = 0; tid < num_threads; ++tid) {
+    size_t begin = tid * block;
+    size_t end = (tid == num_threads - 1) ? size : begin + block;
 
     threads.emplace_back([&, begin, end, min_i, range]() {
       for (size_t i = begin; i < end; ++i) {
