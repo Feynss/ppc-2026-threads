@@ -120,7 +120,6 @@ SparseMatrixCCS KotelnikovaATaskSTL::MultiplyMatrices(const SparseMatrixCCS &a, 
   const int num_threads = (hardware_threads > 0) ? static_cast<int>(hardware_threads) : 1;
   const int cols_per_thread = (b.cols + num_threads - 1) / num_threads;
 
-  // Первый проход: подсчет ненулевых элементов
   std::vector<int> col_start(b.cols, 0);
   std::vector<std::thread> threads;
 
@@ -140,7 +139,6 @@ SparseMatrixCCS KotelnikovaATaskSTL::MultiplyMatrices(const SparseMatrixCCS &a, 
     thread.join();
   }
 
-  // Префиксная сумма для построения col_ptrs (последовательная)
   std::vector<int> col_ptr(b.cols + 1, 0);
   for (int j = 0; j < b.cols; ++j) {
     col_ptr[j + 1] = col_ptr[j] + col_start[j];
@@ -151,7 +149,6 @@ SparseMatrixCCS KotelnikovaATaskSTL::MultiplyMatrices(const SparseMatrixCCS &a, 
   result.row_indices.resize(static_cast<size_t>(total_nnz));
   result.col_ptrs = col_ptr;
 
-  // Второй проход: заполнение данных
   threads.clear();
   for (int thread_idx = 0; thread_idx < num_threads; ++thread_idx) {
     int start_col = thread_idx * cols_per_thread;
