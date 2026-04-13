@@ -128,7 +128,7 @@ bool GoriachevaKMultSparseComplexMatrixCcsALL::RunImpl() {
   std::vector<std::vector<Complex>> local_values(local_cols);
   std::vector<std::vector<int>> local_rows(local_cols);
 
-#pragma omp parallel for default(none) shared(a, b, local_values, local_rows, start)
+#pragma omp parallel for default(none) shared(a, b, local_values, local_rows, start, local_cols)
   for (int j = 0; j < local_cols; j++) {
     ProcessColumn(start + j, a, b, local_values[j], local_rows[j]);
   }
