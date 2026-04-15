@@ -151,6 +151,11 @@ int Relabel(int total, const std::vector<int> &local_labels, std::vector<int> &p
 }  // namespace
 
 bool KondrashovaVTaskSTL::RunImpl() {
+  if (width_ <= 0 || height_ <= 0 || image_.empty()) {
+    GetOutput().count = 0;
+    return true;
+  }
+
   const int total = width_ * height_;
   const int num_threads = ppc::util::GetNumThreads();
   const int max_labels_per_thread = total + 1;
@@ -186,6 +191,11 @@ bool KondrashovaVTaskSTL::RunImpl() {
 }
 
 bool KondrashovaVTaskSTL::PostProcessingImpl() {
+  if (width_ <= 0 || height_ <= 0) {
+    GetOutput().labels.clear();
+    return true;
+  }
+
   GetOutput().labels.assign(height_, std::vector<int>(width_, 0));
   for (int ii = 0; ii < height_; ++ii) {
     for (int jj = 0; jj < width_; ++jj) {
