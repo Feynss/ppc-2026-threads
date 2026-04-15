@@ -3,9 +3,9 @@
 #include <algorithm>
 #include <cmath>
 #include <cstddef>
+#include <thread>
 #include <utility>
 #include <vector>
-#include <thread>
 
 #include "perepelkin_i_convex_hull_graham_scan/common/include/common.hpp"
 #include "util/include/util.hpp"
@@ -53,9 +53,7 @@ bool PerepelkinIConvexHullGrahamScanSTL::RunImpl() {
   return true;
 }
 
-size_t PerepelkinIConvexHullGrahamScanSTL::FindPivotParallel(
-    const std::vector<std::pair<double, double>> &pts) {
-
+size_t PerepelkinIConvexHullGrahamScanSTL::FindPivotParallel(const std::vector<std::pair<double, double>> &pts) {
   size_t pivot_idx = 0;
   const int threads = ppc::util::GetNumThreads();
   const size_t block_size = pts.size() / threads;
@@ -73,12 +71,13 @@ size_t PerepelkinIConvexHullGrahamScanSTL::FindPivotParallel(
         size_t start = tid * block_size;
         size_t end = (tid + 1) * block_size;
 
-        if (start == 0) start = 1;
+        if (start == 0) {
+          start = 1;
+        }
 
         for (size_t i = start; i < end; i++) {
           if (pts[i].second < pts[local].second ||
-              (pts[i].second == pts[local].second &&
-              pts[i].first < pts[local].first)) {
+              (pts[i].second == pts[local].second && pts[i].first < pts[local].first)) {
             local = i;
           }
         }
@@ -93,8 +92,7 @@ size_t PerepelkinIConvexHullGrahamScanSTL::FindPivotParallel(
     size_t i = local_idx[tid];
 
     if (pts[i].second < pts[pivot_idx].second ||
-        (pts[i].second == pts[pivot_idx].second &&
-         pts[i].first < pts[pivot_idx].first)) {
+        (pts[i].second == pts[pivot_idx].second && pts[i].first < pts[pivot_idx].first)) {
       pivot_idx = i;
     }
   }
@@ -102,10 +100,8 @@ size_t PerepelkinIConvexHullGrahamScanSTL::FindPivotParallel(
   return pivot_idx;
 }
 
-void PerepelkinIConvexHullGrahamScanSTL::ParallelSort(
-    std::vector<std::pair<double, double>> &data,
-    const std::pair<double, double> &pivot) {
-
+void PerepelkinIConvexHullGrahamScanSTL::ParallelSort(std::vector<std::pair<double, double>> &data,
+                                                      const std::pair<double, double> &pivot) {
   const int threads = ppc::util::GetNumThreads();
   const size_t block_size = data.size() / threads;
 
@@ -120,11 +116,8 @@ void PerepelkinIConvexHullGrahamScanSTL::ParallelSort(
 
     for (int tid = 0; tid < threads; tid++) {
       workers.emplace_back([&, tid]() {
-        std::sort(data.begin() + start[tid],
-                  data.begin() + start[tid + 1],
-                  [&](const auto &a, const auto &b) {
-                    return AngleCmp(a, b, pivot);
-                  });
+        std::sort(data.begin() + start[tid], data.begin() + start[tid + 1],
+                  [&](const auto &a, const auto &b) { return AngleCmp(a, b, pivot); });
       });
     }
   }
@@ -143,13 +136,8 @@ void PerepelkinIConvexHullGrahamScanSTL::ParallelSort(
         int mid = start[i + size];
         int right = start[std::min(i + (2 * size), threads)];
 
-        std::inplace_merge(
-            data.begin() + left,
-            data.begin() + mid,
-            data.begin() + right,
-            [&](const auto &a, const auto &b) {
-              return AngleCmp(a, b, pivot);
-            });
+        std::inplace_merge(data.begin() + left, data.begin() + mid, data.begin() + right,
+                           [&](const auto &a, const auto &b) { return AngleCmp(a, b, pivot); });
       });
     }
   }
