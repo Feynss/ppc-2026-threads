@@ -81,7 +81,6 @@ void ProcessColumn(int j, const SparseMatrix &a, const SparseMatrix &b, int tid,
     }
   }
 
-  // Custom Shell Sort
   CustomShellSort(touched);
 
   for (int i : touched) {
