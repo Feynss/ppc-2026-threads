@@ -92,7 +92,7 @@ std::vector<double> LazarevaATestTaskSTL::Add(const std::vector<double> &a, cons
   const auto size = static_cast<size_t>(n) * static_cast<size_t>(n);
   std::vector<double> result(size);
 
-  std::transform(a.begin(), a.begin() + static_cast<ptrdiff_t>(size), b.begin(), result.begin(), std::plus<double>());
+  std::transform(a.begin(), a.begin() + static_cast<ptrdiff_t>(size), b.begin(), result.begin(), std::plus<>());
 
   return result;
 }
@@ -101,7 +101,7 @@ std::vector<double> LazarevaATestTaskSTL::Sub(const std::vector<double> &a, cons
   const auto size = static_cast<size_t>(n) * static_cast<size_t>(n);
   std::vector<double> result(size);
 
-  std::transform(a.begin(), a.begin() + static_cast<ptrdiff_t>(size), b.begin(), result.begin(), std::minus<double>());
+  std::transform(a.begin(), a.begin() + static_cast<ptrdiff_t>(size), b.begin(), result.begin(), std::minus<>());
 
   return result;
 }
